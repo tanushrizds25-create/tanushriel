@@ -1,0 +1,59 @@
+import json
+
+class BankSystem:
+    def __init__(self, db="bank.json"):
+        self.db = db
+        self.load()
+
+    def load(self):
+        try:
+            with open(self.db, "r") as f:
+                self.accs = json.load(f)
+        except:
+            self.accs = {}
+
+    def save(self):
+        with open(self.db, "w") as f:
+            json.dump(self.accs, f, indent=2)
+
+    def create(self, acc, name, bal=0):
+        self.accs[acc] = {"name": name, "bal": bal, "hist": [f"Opened with ${bal}"]}
+        self.save()
+
+    def deposit(self, acc, amt):
+        if acc in self.accs and amt > 0:
+            self.accs[acc]["bal"] += amt
+            self.accs[acc]["hist"].append(f"Deposit: +${amt}")
+            self.save()
+
+    def withdraw(self, acc, amt):
+        if acc in self.accs and 0 < amt <= self.accs[acc]["bal"]:
+            self.accs[acc]["bal"] -= amt
+            self.accs[acc]["hist"].append(f"Withdrawal: -${amt}")
+            self.save()
+
+    def transfer(self, sender, receiver, amt):
+        if sender in self.accs and receiver in self.accs and self.accs[sender]["bal"] >= amt > 0:
+            self.accs[sender]["bal"] -= amt
+            self.accs[receiver]["bal"] += amt
+            self.accs[sender]["hist"].append(f"Sent: -${amt} to {receiver}")
+            self.accs[receiver]["hist"].append(f"Recv: +${amt} from {sender}")
+            self.save()
+
+    def statement(self, acc):
+        if acc in self.accs:
+            a = self.accs[acc]
+            print(f"\n--- Statement: {a['name']} ({acc}) ---")
+            print(f"Balance: ${a['bal']}\nHistory: " + ", ".join(a["hist"]))
+
+# Execution Driver
+bank = BankSystem()
+bank.create("ACC101", "Tanushri Zod", 1000)
+bank.create("ACC102", "Alex Smith", 500)
+
+bank.deposit("ACC101", 300)
+bank.withdraw("ACC101", 100)
+bank.transfer("ACC101", "ACC102", 400)
+
+bank.statement("ACC101")
+bank.statement("ACC102")
