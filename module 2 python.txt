@@ -1,0 +1,62 @@
+import json
+
+DB = "bank.json"
+
+def load():
+    try:
+        with open(DB, "r") as f: return json.load(f)
+    except: return {}
+
+def save(accs):
+    with open(DB, "w") as f: json.dump(accs, f, indent=2)
+
+# 1. Create Account Function
+def create_acc(acc, name, bal=0):
+    accs = load()
+    accs[acc] = {"name": name, "bal": bal, "hist": [f"Opened with ${bal}"]}
+    save(accs)
+
+# 2. Deposit Function
+def deposit_amt(acc, amt):
+    accs = load()
+    if acc in accs and amt > 0:
+        accs[acc]["bal"] += amt
+        accs[acc]["hist"].append(f"Deposit: +${amt}")
+        save(accs)
+
+# 3. Withdraw Function
+def withdraw_amt(acc, amt):
+    accs = load()
+    if acc in accs and 0 < amt <= accs[acc]["bal"]:
+        accs[acc]["bal"] -= amt
+        accs[acc]["hist"].append(f"Withdrawal: -${amt}")
+        save(accs)
+
+# 4. Transfer Function
+def transfer_amt(sender, receiver, amt):
+    accs = load()
+    if sender in accs and receiver in accs and accs[sender]["bal"] >= amt > 0:
+        accs[sender]["bal"] -= amt
+        accs[receiver]["bal"] += amt
+        accs[sender]["hist"].append(f"Sent: -${amt} to {receiver}")
+        accs[receiver]["hist"].append(f"Recv: +${amt} from {sender}")
+        save(accs)
+
+# 5. Statement Function
+def print_statement(acc):
+    accs = load()
+    if acc in accs:
+        a = accs[acc]
+        print(f"\n--- Statement: {a['name']} ({acc}) ---")
+        print(f"Balance: ${a['bal']}\nHistory: " + ", ".join(a["hist"]))
+
+# --- DRIVER CODE (Calls functions separately) ---
+create_acc("ACC101", "Tanushri Zod", 1000)
+create_acc("ACC102", "Alex Smith", 500)
+
+deposit_amt("ACC101", 300)
+withdraw_amt("ACC101", 100)
+transfer_amt("ACC101", "ACC102", 400)
+
+print_statement("ACC101")
+print_statement("ACC102")
